@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Reminder and Scheduler - Krishna's Software Spot</title>
+    <meta name="description" content="A simple tool to schedule events and get browser alerts for reminders. Perfect for India!">
+    <meta name="keywords" content="Event Reminder India, Scheduler Tool India, Productivity Tool">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #dcdcdc;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: linear-gradient(45deg, #2980b9, #1f6ba6);
+        }
+        button.reset {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+        }
+        button.reset:hover {
+            background: linear-gradient(45deg, #c0392b, #a93226);
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            background: #ecf0f1;
+            color: #2c3e50;
+            display: none;
+        }
+        .error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+        li {
+            background: #ecf0f1;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .delete-btn {
+            background: #e74c3c;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Event Reminder and Scheduler</h1>
+        <p>Schedule events and get browser alerts for reminders. Perfect for India!</p>
+
+        <div class="input-group">
+            <label for="event-name">Event Name:</label>
+            <input type="text" id="event-name" placeholder="e.g., Meeting with Client">
+            <div id="event-name-error" class="error">Please enter an event name.</div>
+        </div>
+        <div class="input-group">
+            <label for="event-date">Date:</label>
+            <input type="date" id="event-date">
+            <div id="event-date-error" class="error">Please select a future date.</div>
+        </div>
+        <div class="input-group">
+            <label for="event-time">Event Time:</label>
+            <input type="time" id="event-time">
+            <div id="event-time-error" class="error">Please select a time.</div>
+        </div>
+        <div class="input-group">
+            <label for="reminder-time">Reminder Time (H:M:S):</label>
+            <input type="time" id="reminder-time" step="1">
+            <div id="reminder-time-error" class="error">Please select a reminder time.</div>
+        </div>
+        <div class="input-group">
+            <label for="event-email">Email (Optional):</label>
+            <input type="email" id="event-email" placeholder="e.g., user@example.com">
+            <div id="event-email-error" class="error">Please enter a valid email.</div>
+        </div>
+
+        <button onclick="addEvent()">Add Event</button>
+        <button onclick="saveEvents()">Save Events</button>
+        <button onclick="loadEvents()">Load Saved Events</button>
+        <button class="reset" onclick="resetForm()">Reset</button>
+
+        <div id="result"></div>
+        <ul id="event-list"></ul>
+
+        <h2>How to Use This Tool</h2>
+        <p>Enter event details, set a reminder time, and keep this page open to get browser alerts. Save events to store them locally!</p>
+        <p><strong>About Krishna's Software Spot</strong>: We provide free productivity tools for users in India.</p>
+    </div>
+
+    <script>
+        let events = JSON.parse(localStorage.getItem('events')) || [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadEvents();
+            startReminderChecker();
+        });
+
+        function addEvent() {
+            const name = document.getElementById('event-name').value.trim();
+            const date = document.getElementById('event-date').value;
+            const time = document.getElementById('event-time').value;
+            const reminderTime = document.getElementById('reminder-time').value;
+            const email = document.getElementById('event-email').value.trim();
+            const today = new Date().toISOString().split('T')[0];
+
+            // Validation
+            let isValid = true;
+            document.getElementById('event-name-error').style.display = 'none';
+            document.getElementById('event-date-error').style.display = 'none';
+            document.getElementById('event-time-error').style.display = 'none';
+            document.getElementById('reminder-time-error').style.display = 'none';
+            document.getElementById('event-email-error').style.display = 'none';
+
+            if (!name) {
+                document.getElementById('event-name-error').style.display = 'block';
+                isValid = false;
+            }
+            if (!date || date <= today) {
+                document.getElementById('event-date-error').style.display = 'block';
+                isValid = false;
+            }
+            if (!time) {
+                document.getElementById('event-time-error').style.display = 'block';
+                isValid = false;
+            }
+            if (!reminderTime) {
+                document.getElementById('reminder-time-error').style.display = 'block';
+                isValid = false;
+            }
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                document.getElementById('event-email-error').style.display = 'block';
+                isValid = false;
+            }
+
+            if (!isValid) return;
+
+            const eventDateTime = new Date(date + 'T' + time);
+            const reminderDateTime = new Date(date + 'T' + reminderTime);
+            if (reminderDateTime >= eventDateTime) {
+                document.getElementById('reminder-time-error').textContent = 'Reminder time must be before event time.';
+                document.getElementById('reminder-time-error').style.display = 'block';
+                return;
+            }
+
+            const event = { id: Date.now(), name, date, time, reminderTime, email };
+            events.push(event);
+            updateEventList();
+            saveEvents();
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `Event "${name}" added! You'll get a browser alert at ${reminderTime} on ${date}.`;
+            setTimeout(() => resultDiv.style.display = 'none', 5000);
+
+            document.getElementById('event-name').value = '';
+            document.getElementById('event-date').value = '';
+            document.getElementById('event-time').value = '';
+            document.getElementById('reminder-time').value = '';
+            document.getElementById('event-email').value = '';
+        }
+
+        function startReminderChecker() {
+            setInterval(() => {
+                const now = new Date();
+                events.forEach((event, index) => {
+                    const reminderDateTime = new Date(`${event.date}T${event.reminderTime}`);
+                    const timeDiff = (reminderDateTime - now) / 1000;
+
+                    if (timeDiff <= 60 && timeDiff >= 0) {
+                        alert(`Reminder: ${event.name} is happening soon at ${event.time} on ${event.date}!`);
+                        events.splice(index, 1);
+                        updateEventList();
+                        saveEvents();
+                    }
+                });
+            }, 30000); // Check every 30 seconds
+        }
+
+        function updateEventList() {
+            const eventList = document.getElementById('event-list');
+            eventList.innerHTML = '';
+            events.forEach(event => {
+                const li = document.createElement('li');
+                li.innerHTML = `${event.name} - ${event.date} at ${event.time} (Reminder: ${event.reminderTime}) 
+                    <button class="delete-btn" onclick="deleteEvent(${event.id})">Delete</button>`;
+                eventList.appendChild(li);
+            });
+        }
+
+        function deleteEvent(eventId) {
+            events = events.filter(event => event.id !== eventId);
+            updateEventList();
+            saveEvents();
+        }
+
+        function saveEvents() {
+            localStorage.setItem('events', JSON.stringify(events));
+            updateEventList();
+        }
+
+        function loadEvents() {
+            events = JSON.parse(localStorage.getItem('events')) || [];
+            updateEventList();
+        }
+
+        function resetForm() {
+            events = [];
+            document.getElementById('event-name').value = '';
+            document.getElementById('event-date').value = '';
+            document.getElementById('event-time').value = '';
+            document.getElementById('reminder-time').value = '';
+            document.getElementById('event-email').value = '';
+            document.getElementById('result').style.display = 'none';
+            localStorage.removeItem('events');
+            updateEventList();
+        }
+    </script>
+</body>
+</html>
